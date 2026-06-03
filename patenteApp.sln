@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37314.3 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatenteApp.Domain", "PatenteApp.Domain\PatenteApp.Domain.csproj", "{A32BA538-5767-4CFA-B7DB-6CBBB86D4650}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatenteApp.Application", "PatenteApp.Application\PatenteApp.Application.csproj", "{E1B55413-5807-4EAD-BEB6-BFE9A96F7904}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatenteApp.Infrastructure", "PatenteApp.Infrastructure\PatenteApp.Infrastructure.csproj", "{64AE03D9-87B4-4B0F-A087-160998F5B604}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatenteApp.Api", "PatenteApp.Api\PatenteApp.Api.csproj", "{BC5683E6-B8DB-4D58-968D-E142B6948A83}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Specs", "Specs", "{6C83A596-D32D-B35F-00DD-F0C99B673980}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Demo\openapi.yml = ..\..\Demo\openapi.yml
+		..\..\Demo\patenteSpec.md = ..\..\Demo\patenteSpec.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatenteApp.DataSeeder", "PatenteApp.DataSeeder\PatenteApp.DataSeeder.csproj", "{D8C84BD6-97EA-707F-9FF3-FA3A60378C34}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dati", "Dati", "{96F4FBBD-AC54-4161-A25B-27AE7DED10F8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Demo\QuizPatenteB-main\QuizPatenteB-main\quizPatenteB2023.json = ..\..\Demo\QuizPatenteB-main\QuizPatenteB-main\quizPatenteB2023.json
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A32BA538-5767-4CFA-B7DB-6CBBB86D4650}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A32BA538-5767-4CFA-B7DB-6CBBB86D4650}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A32BA538-5767-4CFA-B7DB-6CBBB86D4650}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A32BA538-5767-4CFA-B7DB-6CBBB86D4650}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1B55413-5807-4EAD-BEB6-BFE9A96F7904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1B55413-5807-4EAD-BEB6-BFE9A96F7904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1B55413-5807-4EAD-BEB6-BFE9A96F7904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1B55413-5807-4EAD-BEB6-BFE9A96F7904}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64AE03D9-87B4-4B0F-A087-160998F5B604}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64AE03D9-87B4-4B0F-A087-160998F5B604}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64AE03D9-87B4-4B0F-A087-160998F5B604}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64AE03D9-87B4-4B0F-A087-160998F5B604}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC5683E6-B8DB-4D58-968D-E142B6948A83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC5683E6-B8DB-4D58-968D-E142B6948A83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC5683E6-B8DB-4D58-968D-E142B6948A83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC5683E6-B8DB-4D58-968D-E142B6948A83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8C84BD6-97EA-707F-9FF3-FA3A60378C34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8C84BD6-97EA-707F-9FF3-FA3A60378C34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8C84BD6-97EA-707F-9FF3-FA3A60378C34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8C84BD6-97EA-707F-9FF3-FA3A60378C34}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F0E79F13-B787-457B-A71B-B9C5F9B59552}
+	EndGlobalSection
+EndGlobal
