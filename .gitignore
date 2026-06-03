@@ -5,6 +5,11 @@
 
 # dotenv files
 .env
+.env.local
+.env.*.local
+
+# Archivos de secrets locales (nunca subir a git)
+appsettings.Secrets.json
 
 # User-specific files
 *.rsuser
