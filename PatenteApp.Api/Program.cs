@@ -1,35 +1,37 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PatenteApp.Api.Infrastructure.Settings;
-using PatenteApp.Domain.Entities; // Asumiendo que copiaste tus entidades aquí
+using PatenteApp.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configuración fuertemente tipada (Options Pattern)
+// 1. ConfiguraciÃ³n fuertemente tipada (Options Pattern)
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
 
-// 2. Configurar CORS (Permitir a Angular conectarse)
+// 2. Configurar CORS desde appsettings
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp",
-        policy => policy.WithOrigins("http://localhost:4200") // Puerto por defecto de Angular
+        policy => policy.WithOrigins(allowedOrigins)
                         .AllowAnyMethod()
                         .AllowAnyHeader());
 });
 
-// 3. Inyección de Dependencias: MongoDB
-// Trade-off: MongoClient DEBE ser Singleton por mejores prácticas para reutilizar el pool de conexiones
+// 3. InyecciÃ³n de Dependencias: MongoDB
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
     return new MongoClient(settings.ConnectionString);
 });
 
-// Scoped: Se crea una instancia por cada petición HTTP
 builder.Services.AddScoped(sp =>
 {
     var client = sp.GetRequiredService<IMongoClient>();
@@ -37,8 +39,9 @@ builder.Services.AddScoped(sp =>
     return client.GetDatabase(settings.DatabaseName);
 });
 
-// --- CONFIGURACIÓN DE FIREBASE AUTH ---
-var firebaseProjectId = "patenteapp-415a9"; // Cámbialo por tu ID real
+// 4. Firebase Auth â€” leer Project ID desde configuraciÃ³n
+var firebaseProjectId = builder.Configuration["Firebase:ProjectId"]
+    ?? throw new InvalidOperationException("Firebase:ProjectId no estÃ¡ configurado.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -56,7 +59,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine($"--- ERROR DE AUTENTICACIÓN: {context.Exception.Message} ---");
+                Console.WriteLine($"--- ERROR DE AUTENTICACIÃ“N: {context.Exception.Message} ---");
                 return Task.CompletedTask;
             },
             OnTokenValidated = context =>
@@ -71,26 +74,21 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Usar CORS
 app.UseCors("AllowAngularApp");
-
-// MUY IMPORTANTE: Estos dos deben ir entre UseCors y los endpoints
 app.UseAuthentication();
 app.UseAuthorization();
 
 
-// --- ENDPOINTS (Minimal APIs) ---
+// --- ENDPOINTS ---
 
-// GET: /api/questions/simulate
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
 app.MapGet("/api/questions/simulate", async (IMongoDatabase db) =>
 {
     var collection = db.GetCollection<Question>("Questions");
-
-    // Utilizamos $sample de MongoDB para obtener 30 documentos aleatorios de forma muy eficiente
     var pipeline = new EmptyPipelineDefinition<Question>().Sample(30);
     var randomQuestions = await collection.Aggregate(pipeline).ToListAsync();
 
-    // Mapeamos a un DTO anónimo para NO enviar IsTrue (evitar trampas en el frontend)
     var response = randomQuestions.Select(q => new
     {
         q.Id,
@@ -105,14 +103,12 @@ app.MapGet("/api/questions/simulate", async (IMongoDatabase db) =>
 .Produces<IEnumerable<object>>(StatusCodes.Status200OK);
 
 
-// POST: /api/quiz/submit
-// Recibe las respuestas y calcula el resultado del lado del servidor por seguridad
 app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatabase db, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirst("user_id")?.Value ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
     var questionsCollection = db.GetCollection<Question>("Questions");
-    var historyCollection = db.GetCollection<QuizHistory>("ExamHistory"); // Nueva colección
+    var historyCollection = db.GetCollection<QuizHistory>("ExamHistory");
 
     var questionIds = submission.Answers.Select(a => a.QuestionId).ToList();
     var filter = Builders<Question>.Filter.In(q => q.Id, questionIds);
@@ -125,7 +121,6 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
     {
         var realQuestion = actualQuestions.FirstOrDefault(q => q.Id == userAnswer.QuestionId);
 
-        // Si la pregunta existe y la respuesta es incorrecta
         if (realQuestion != null && realQuestion.IsTrue != userAnswer.Answer)
         {
             errorsCount++;
@@ -140,11 +135,10 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
 
     bool passed = errorsCount <= 3;
 
-    // Guardar en la base de datos CON EL ID DEL USUARIO
     var historyRecord = new QuizHistory
     {
         SessionId = submission.SessionId,
-        UserId = userId!, // ¡Aquí usamos el UID real de Firebase!
+        UserId = userId!,
         ErrorsCount = errorsCount,
         Passed = passed
     };
@@ -153,7 +147,7 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
     return Results.Ok(new QuizResultDto(passed, errorsCount, corrections));
 })
 .WithName("SubmitExam")
-.RequireAuthorization(); // <-- ¡ESTO PROTEGE EL ENDPOINT!
+.RequireAuthorization();
 
 app.MapGet("/api/quiz/history", async (IMongoDatabase db, ClaimsPrincipal user) =>
 {
@@ -161,7 +155,6 @@ app.MapGet("/api/quiz/history", async (IMongoDatabase db, ClaimsPrincipal user) 
 
     var historyCollection = db.GetCollection<QuizHistory>("ExamHistory");
 
-    // Buscar solo los exámenes de ESTE usuario, ordenados por fecha descendente
     var userHistory = await historyCollection
         .Find(h => h.UserId == userId)
         .SortByDescending(h => h.DateTaken)
@@ -170,15 +163,13 @@ app.MapGet("/api/quiz/history", async (IMongoDatabase db, ClaimsPrincipal user) 
     return Results.Ok(userHistory);
 })
 .WithName("GetUserHistory")
-.RequireAuthorization(); // <-- Solo usuarios logueados
+.RequireAuthorization();
 
 app.Run();
 
-// DTOs auxiliares para el POST
 public record QuizSubmissionDto(string SessionId, List<UserAnswerDto> Answers);
 public record UserAnswerDto(string QuestionId, bool Answer);
 
-// Actualiza el CorrectionDto
 public record CorrectionDto(
     string QuestionId,
     string QuestionText,
@@ -186,5 +177,4 @@ public record CorrectionDto(
     bool UserAnswer
 );
 
-// Mantenemos el QuizResultDto
 public record QuizResultDto(bool Passed, int ErrorsCount, List<CorrectionDto> Corrections);

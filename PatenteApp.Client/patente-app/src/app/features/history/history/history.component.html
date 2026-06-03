@@ -1,0 +1,25 @@
+<div class="history-container">
+  <div class="history-header">
+    <h2>Il mio Storico</h2>
+  </div>
+
+  <div class="history-list">
+    @for (item of history(); track item.dateTaken) {
+      <div class="history-card" [class.passed]="item.passed" [class.failed]="!item.passed">
+        <div class="info">
+          <h4>{{ item.passed ? 'Promosso' : 'Bocciato' }}</h4>
+          <p>{{ item.dateTaken | date:'short' }}</p>
+        </div>
+        <div class="badge" [class.passed]="item.passed" [class.failed]="!item.passed">
+          {{ item.errorsCount }} Errori
+        </div>
+      </div>
+    } @empty {
+      <p>Non hai ancora effettuato simulazioni.</p>
+    }
+  </div>
+
+  <button class="btn-back" (click)="goBack()">
+    ← Torna al Quiz
+  </button>
+</div>

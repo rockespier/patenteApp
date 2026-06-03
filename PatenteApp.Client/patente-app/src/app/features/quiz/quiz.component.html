@@ -1,0 +1,103 @@
+<div class="quiz-container">
+  
+  @if (!examResult()) {
+    <header class="quiz-header">
+      <div class="timer" [class.danger]="timeLeft() < 300">
+        ⏱️ {{ formattedTime() }}
+      </div>
+      <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Inviando...' : 'Termina Esame' }}
+      </button>
+    </header>
+
+    <main class="quiz-body">
+      @if (currentQuestion(); as q) {
+        <div class="question-card fade-in">
+          @if (q.imageUrl) {
+            <div class="image-container">
+              <img [src]="'/assets' + q.imageUrl" alt="Segnale Stradale" class="signal-image" />
+            </div>
+          }
+          <h2 class="question-text">{{ q.text }}</h2>
+          <span class="category-badge">{{ q.category }}</span>
+        </div>
+
+        <div class="controls">
+          <button class="btn-answer btn-vero" [class.selected-vero]="currentAnswer() === true" (click)="selectAnswer(true)">VERO (V)</button>
+          <button class="btn-answer btn-falso" [class.selected-falso]="currentAnswer() === false" (click)="selectAnswer(false)">FALSO (F)</button>
+        </div>
+      } @else {
+        <div class="loading-state"><p>Caricamento scheda d'esame...</p></div>
+      }
+    </main>
+
+    <footer class="quiz-footer">
+      <div class="pagination-grid">
+        @for (q of questions(); track q.id; let i = $index) {
+          <button class="page-dot" [class.active]="i === currentIndex()" [class.answered]="hasAnswered(q.id)" (click)="goToQuestion(i)">{{ i + 1 }}</button>
+        }
+      </div>
+    </footer>
+
+  } @else {
+    <div class="results-view fade-in">
+      
+      <div class="result-badge" [class.success]="examResult()!.passed" [class.error]="!examResult()!.passed">
+        @if (examResult()!.passed) {
+          <span class="icon">✅</span>
+          <h1>PROMOSSO</h1>
+        } @else {
+          <span class="icon">❌</span>
+          <h1>BOCCIATO</h1>
+        }
+      </div>
+
+      <div class="result-details">
+        <p class="error-count">
+          Hai commesso <strong>{{ examResult()!.errorsCount }}</strong> errori.
+        </p>
+        <p class="rule-text">(Il limite massimo consentito è di 3 errori)</p>
+      </div>
+
+      @if (examResult()!.corrections.length > 0) {
+        <div class="corrections-section">
+          <h3>Le tue risposte errate:</h3>
+          <div class="corrections-list">
+            
+            @for (correction of examResult()!.corrections; track correction.questionId; let i = $index) {
+              <div class="correction-card">
+                <p class="c-question"><strong>{{ i + 1 }}.</strong> {{ correction.questionText }}</p>
+                <div class="c-answers">
+                  <div class="user-ans">
+                    La tua risposta: 
+                    <span class="badge-wrong">
+                      {{ correction.userAnswer ? 'VERO' : 'FALSO' }}
+                    </span>
+                  </div>
+                  <div class="correct-ans">
+                    Risposta corretta: 
+                    <span class="badge-correct">
+                      {{ correction.correctAnswer ? 'VERO' : 'FALSO' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+      }
+
+      <div class="result-actions">
+        <button class="btn-history" (click)="restartQuiz()">
+          🔄 Nuova Simulazione
+        </button>
+
+        <button class="btn-history" (click)="goToHistory()">
+          📊 Vedi Storico Risultati
+        </button>
+      </div>
+    </div>
+  }
+</div>
+  
