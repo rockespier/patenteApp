@@ -1,0 +1,66 @@
+<div class="auth-container">
+  <div class="auth-card fade-in">
+    
+    <div class="auth-header">
+      <div class="logo">🚗 PatenteApp</div>
+      <h2>{{ isLoginMode() ? 'Accedi' : 'Crea un account' }}</h2>
+      <p>Per salvare i tuoi progressi e simulazioni</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-alert">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="authForm" (ngSubmit)="onSubmit()">
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="tu@email.com"
+          [class.is-invalid]="emailControl?.invalid && emailControl?.touched">
+        
+        @if (emailControl?.hasError('required') && emailControl?.touched) {
+          <span class="error-text">L'email è obbligatoria</span>
+        } @else if (emailControl?.hasError('email') && emailControl?.touched) {
+          <span class="error-text">Inserisci un'email valida</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          placeholder="Minimo 6 caratteri"
+          [class.is-invalid]="passwordControl?.invalid && passwordControl?.touched">
+        
+        @if (passwordControl?.hasError('required') && passwordControl?.touched) {
+          <span class="error-text">La password è obbligatoria</span>
+        } @else if (passwordControl?.hasError('minlength') && passwordControl?.touched) {
+          <span class="error-text">La password deve avere almeno 6 caratteri</span>
+        }
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading() || authForm.invalid">
+        {{ isLoading() ? 'Caricamento...' : (isLoginMode() ? 'Accedi' : 'Registrati') }}
+      </button>
+
+    </form>
+
+    <div class="auth-footer">
+      <p>
+        {{ isLoginMode() ? 'Non hai un account?' : 'Hai già un account?' }}
+        <button class="btn-link" (click)="toggleMode()" type="button">
+          {{ isLoginMode() ? 'Registrati ora' : 'Accedi qui' }}
+        </button>
+      </p>
+    </div>
+
+  </div>
+</div>
