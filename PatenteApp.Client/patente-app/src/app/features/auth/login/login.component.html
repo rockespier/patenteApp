@@ -1,33 +1,37 @@
-<div class="auth-container">
-  <div class="auth-card fade-in">
+<main class="auth-container">
+  <section class="auth-card fade-in" aria-labelledby="auth-title">
     
     <div class="auth-header">
-      <div class="logo">🚗 PatenteApp</div>
-      <h2>{{ isLoginMode() ? 'Accedi' : 'Crea un account' }}</h2>
-      <p>Per salvare i tuoi progressi e simulazioni</p>
+      <div class="logo" aria-hidden="true">🚗</div>
+      <h1 id="auth-title">{{ isLoginMode() ? 'Accedi' : 'Crea un account' }}</h1>
+      <p>Salva i tuoi progressi e riprendi lo studio in qualsiasi momento.</p>
     </div>
 
     @if (errorMessage()) {
-      <div class="error-alert">
-        ⚠️ {{ errorMessage() }}
+      <div class="error-alert" role="alert" aria-live="polite">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ errorMessage() }}</span>
       </div>
     }
 
-    <form [formGroup]="authForm" (ngSubmit)="onSubmit()">
-      
+    <form [formGroup]="authForm" (ngSubmit)="onSubmit()" [attr.aria-busy]="isLoading()">
       <div class="form-group">
         <label for="email">Email</label>
         <input 
           type="email" 
           id="email" 
           formControlName="email" 
-          placeholder="tu@email.com"
+          placeholder="nome@scuola.it"
+          autocomplete="email"
+          inputmode="email"
+          [attr.aria-invalid]="emailControl?.invalid && emailControl?.touched"
+          [attr.aria-describedby]="emailControl?.invalid && emailControl?.touched ? 'email-error' : null"
           [class.is-invalid]="emailControl?.invalid && emailControl?.touched">
         
         @if (emailControl?.hasError('required') && emailControl?.touched) {
-          <span class="error-text">L'email è obbligatoria</span>
+          <span id="email-error" class="error-text">L'email è obbligatoria.</span>
         } @else if (emailControl?.hasError('email') && emailControl?.touched) {
-          <span class="error-text">Inserisci un'email valida</span>
+          <span id="email-error" class="error-text">Inserisci un'email valida.</span>
         }
       </div>
 
@@ -37,21 +41,34 @@
           type="password" 
           id="password" 
           formControlName="password" 
-          placeholder="Minimo 6 caratteri"
+          placeholder="Almeno 6 caratteri"
+          [attr.autocomplete]="isLoginMode() ? 'current-password' : 'new-password'"
+          [attr.aria-invalid]="passwordControl?.invalid && passwordControl?.touched"
+          [attr.aria-describedby]="passwordControl?.invalid && passwordControl?.touched ? 'password-error' : null"
           [class.is-invalid]="passwordControl?.invalid && passwordControl?.touched">
         
         @if (passwordControl?.hasError('required') && passwordControl?.touched) {
-          <span class="error-text">La password è obbligatoria</span>
+          <span id="password-error" class="error-text">La password è obbligatoria.</span>
         } @else if (passwordControl?.hasError('minlength') && passwordControl?.touched) {
-          <span class="error-text">La password deve avere almeno 6 caratteri</span>
+          <span id="password-error" class="error-text">La password deve avere almeno 6 caratteri.</span>
         }
       </div>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading() || authForm.invalid">
+       <button type="submit" class="btn-primary" [disabled]="isLoading() || authForm.invalid">
         {{ isLoading() ? 'Caricamento...' : (isLoginMode() ? 'Accedi' : 'Registrati') }}
       </button>
 
     </form>
+
+    <div class="auth-divider">
+      <span>oppure</span>
+    </div>
+
+    <button type="button" class="btn-google" (click)="loginWithGoogle()" [disabled]="isLoading()">
+      <img src="/assets/google__g__logo.svg.png" alt="Google Logo">
+      {{ isLoginMode() ? 'Accedi con Google' : 'Registrati con Google' }}
+    </button>
+    
 
     <div class="auth-footer">
       <p>
@@ -62,5 +79,5 @@
       </p>
     </div>
 
-  </div>
-</div>
+  </section>
+</main>

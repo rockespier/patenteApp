@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://TU-DOMINIO-PRODUCCION/api',
+  apiBaseUrl: 'https://patenteapp.gestionaminegocio.com/api/',
+  apiVersionPath: '/api/',
   firebase: {
     projectId: "patenteapp-415a9",
     appId: "1:517159636575:web:11fa6b751fce4b518c15ea",

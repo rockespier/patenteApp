@@ -78,4 +78,23 @@ export class LoginComponent {
   // Getters para el HTML
   get emailControl() { return this.authForm.get('email'); }
   get passwordControl() { return this.authForm.get('password'); }
+
+  async loginWithGoogle(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.authService.loginWithGoogle();
+    } catch (error: any) {
+      // Manejo de error común: el usuario cierra la ventana flotante antes de firmar
+      if (error.code === 'auth/popup-closed-by-user') {
+        this.errorMessage.set('Accesso annullato dall\'utente.');
+      } else {
+        this.errorMessage.set('Impossibile accedere con Google. Riprova.');
+      }
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+  
 }

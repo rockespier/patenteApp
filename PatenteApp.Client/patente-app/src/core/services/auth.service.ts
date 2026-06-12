@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Auth, authState, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User } from '@angular/fire/auth';
+import { Auth, authState, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User,signInWithPopup,GoogleAuthProvider } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -43,4 +43,21 @@ export class AuthService {
     await signOut(this.auth);
     this.router.navigate(['/login']);
   }
+  /**
+   * Autenticación con Google (OAuth 2.0)
+   */
+  async loginWithGoogle(): Promise<void> {
+    try {
+      const provider = new GoogleAuthProvider();
+      // Esto abrirá una ventana emergente segura nativa de Google
+      await signInWithPopup(this.auth, provider);
+      
+      // Una vez logueado con éxito, redirigimos al examen
+      this.router.navigate(['/quiz']);
+    } catch (error) {
+      console.error('Error durante el inicio de sesión con Google', error);
+      throw error;
+    }
+  }
+
 }

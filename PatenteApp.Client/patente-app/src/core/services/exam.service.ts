@@ -2,8 +2,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../enviroments/environment';
 import { Question, QuizResult, QuizSubmission } from '../models/exam.models';
+import { API_BASE_URL } from '../constants/api.constans';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +11,7 @@ import { Question, QuizResult, QuizSubmission } from '../models/exam.models';
 export class ExamService {
   // Inyección de dependencias moderna en Angular
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl;
+  private readonly baseUrl = API_BASE_URL;
 
   /**
    * Obtiene 30 preguntas aleatorias del backend

@@ -1,7 +1,8 @@
 export const environment = {
   production: false,
   // REEMPLAZA ESTE PUERTO por el que anotaste de tu API de .NET
-  apiUrl: 'http://localhost:5235/api',
+  apiBaseUrl: 'http://localhost:5235/api',
+  apiVersionPath: '',
   firebase: {
     projectId: "patenteapp-415a9",
     appId: "1:517159636575:web:11fa6b751fce4b518c15ea",

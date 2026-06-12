@@ -1,11 +1,12 @@
 <div class="history-container">
   <div class="history-header">
-    <h2>Il mio Storico</h2>
+    <p class="history-kicker">Progressi e risultati</p>
+    <h1>Il mio storico</h1>
   </div>
 
-  <div class="history-list">
+  <div class="history-list" role="list" aria-label="Storico risultati simulazioni">
     @for (item of history(); track item.dateTaken) {
-      <div class="history-card" [class.passed]="item.passed" [class.failed]="!item.passed">
+      <article class="history-card" [class.passed]="item.passed" [class.failed]="!item.passed" role="listitem">
         <div class="info">
           <h4>{{ item.passed ? 'Promosso' : 'Bocciato' }}</h4>
           <p>{{ item.dateTaken | date:'short' }}</p>
@@ -13,13 +14,13 @@
         <div class="badge" [class.passed]="item.passed" [class.failed]="!item.passed">
           {{ item.errorsCount }} Errori
         </div>
-      </div>
+      </article>
     } @empty {
-      <p>Non hai ancora effettuato simulazioni.</p>
+      <p class="empty-state">Non hai ancora effettuato simulazioni.</p>
     }
   </div>
 
   <button class="btn-back" (click)="goBack()">
-    ← Torna al Quiz
+    Torna al quiz
   </button>
 </div>

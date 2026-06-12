@@ -78,12 +78,20 @@ app.UseCors("AllowAngularApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// --- API prefix centralizado ---
+// En producción queremos ENDPOINTS sin "/api". En desarrollo (o según tu preferencia) mantenemos el prefijo.
+var apiPrefixConfig = builder.Configuration["Api:Prefix"];
+var apiPrefix = !string.IsNullOrEmpty(apiPrefixConfig)
+    ? apiPrefixConfig
+    : (app.Environment.IsProduction() ? "" : "/api");
+string ApiPath(string path) => string.IsNullOrEmpty(apiPrefix) ? path : apiPrefix + path;
+
 
 // --- ENDPOINTS ---
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapGet(ApiPath("/health"), () => Results.Ok(new { status = "healthy" }));
 
-app.MapGet("/api/questions/simulate", async (IMongoDatabase db) =>
+app.MapGet(ApiPath("/questions/simulate"), async (IMongoDatabase db) =>
 {
     var collection = db.GetCollection<Question>("Questions");
     var pipeline = new EmptyPipelineDefinition<Question>().Sample(30);
@@ -103,7 +111,7 @@ app.MapGet("/api/questions/simulate", async (IMongoDatabase db) =>
 .Produces<IEnumerable<object>>(StatusCodes.Status200OK);
 
 
-app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatabase db, ClaimsPrincipal user) =>
+app.MapPost(ApiPath("/quiz/submit"), async (QuizSubmissionDto submission, IMongoDatabase db, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirst("user_id")?.Value ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -116,6 +124,7 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
 
     int errorsCount = 0;
     var corrections = new List<CorrectionDto>();
+    int okAnswersCount = 0;
 
     foreach (var userAnswer in submission.Answers)
     {
@@ -130,10 +139,13 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
                 CorrectAnswer: realQuestion.IsTrue,
                 UserAnswer: userAnswer.Answer
             ));
+        }else 
+        {
+            okAnswersCount++;
         }
     }
 
-    bool passed = errorsCount <= 3;
+    bool passed = (errorsCount <= 3 && okAnswersCount >= 27);
 
     var historyRecord = new QuizHistory
     {
@@ -149,7 +161,7 @@ app.MapPost("/api/quiz/submit", async (QuizSubmissionDto submission, IMongoDatab
 .WithName("SubmitExam")
 .RequireAuthorization();
 
-app.MapGet("/api/quiz/history", async (IMongoDatabase db, ClaimsPrincipal user) =>
+app.MapGet(ApiPath("/quiz/history"), async (IMongoDatabase db, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirst("user_id")?.Value ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
