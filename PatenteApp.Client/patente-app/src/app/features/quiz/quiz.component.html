@@ -1,46 +1,173 @@
-<div class="quiz-container">
+<div class="quiz-container" [class.showing-results]="!!examResult()">
   
   @if (!examResult()) {
     <header class="quiz-header">
-      <div class="timer" [class.danger]="timeLeft() < 300">
-        ⏱️ {{ formattedTime() }}
+      <div class="header-stack">
+        <div class="user-info">
+          <span class="eyebrow">Accesso attivo</span>
+          <span class="user-email">{{ authService.currentUser()?.email || 'Utente' }}</span>
+        </div>
+        <div class="progress-meta">
+          <span>Domanda {{ currentIndex() + 1 }} di {{ questions().length || 30 }}</span>
+          <span>{{ currentAnswer() === null ? 'Nessuna risposta' : 'Risposta salvata' }}</span>
+        </div>
       </div>
-      <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting()">
-        {{ isSubmitting() ? 'Inviando...' : 'Termina Esame' }}
-      </button>
+      <div class="header-actions">
+        <div class="timer" [class.danger]="timeLeft() < 300" aria-live="polite">
+          {{ formattedTime() }}
+        </div>
+        <button class="btn-help" (click)="openHelpModal()" type="button" aria-label="Apri i suggerimenti per il quiz">
+          💡 Aiuto
+        </button>
+        <button class="btn-logout" (click)="openLogoutModal()" type="button" aria-label="Esci dalla sessione">
+          Esci
+        </button>
+        <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting()" type="button">
+          {{ isSubmitting() ? 'Invio in corso...' : 'Termina esame' }}
+        </button>
+      </div>
+
+      @if (showHelpModal()) {
+        <div class="modal-overlay" (click)="closeHelpModal()">
+          <div class="modal-card help-card fade-in" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="help-title">
+            <div class="help-header">
+              <h3 id="help-title">💡 Come rispondere senza errori</h3>
+              <button class="btn-help-close" (click)="closeHelpModal()" type="button" aria-label="Chiudi i suggerimenti">✕</button>
+            </div>
+
+            <div class="help-tabs" role="tablist">
+              <button class="help-tab" [class.active]="helpTab() === 'tips'" role="tab" [attr.aria-selected]="helpTab() === 'tips'" (click)="setHelpTab('tips')" type="button">Consigli</button>
+              <button class="help-tab" [class.active]="helpTab() === 'false-words'" role="tab" [attr.aria-selected]="helpTab() === 'false-words'" (click)="setHelpTab('false-words')" type="button">Parole FALSE</button>
+              <button class="help-tab" [class.active]="helpTab() === 'true-words'" role="tab" [attr.aria-selected]="helpTab() === 'true-words'" (click)="setHelpTab('true-words')" type="button">Parole VERE</button>
+              <button class="help-tab" [class.active]="helpTab() === 'common-errors'" role="tab" [attr.aria-selected]="helpTab() === 'common-errors'" (click)="setHelpTab('common-errors')" type="button">Errori comuni</button>
+            </div>
+
+            <div class="help-content">
+              @switch (helpTab()) {
+                @case ('tips') {
+                  <p class="help-intro">
+                    Comprendere gli indizi linguistici presenti nelle domande è di grande aiuto per rispondere
+                    correttamente, riducendo il rischio di errori e aumentando le probabilità di superare l'esame.
+                  </p>
+                  @for (tip of helpTips; track tip.title) {
+                    <div class="help-tip">
+                      <h4>{{ tip.title }}</h4>
+                      <p>{{ tip.text }}</p>
+                    </div>
+                  }
+                }
+                @case ('false-words') {
+                  <p class="help-intro">
+                    Parole che compaiono <strong>solo nelle domande FALSE</strong> (con il numero di volte):
+                  </p>
+                  <div class="word-grid">
+                    @for (item of falseWords; track item.word) {
+                      <span class="word-chip chip-false">{{ item.word }} <em>{{ item.count }}</em></span>
+                    }
+                  </div>
+                }
+                @case ('true-words') {
+                  <p class="help-intro">
+                    Parole che compaiono <strong>solo nelle domande VERE</strong> (con il numero di volte):
+                  </p>
+                  <div class="word-grid">
+                    @for (item of trueWords; track item.word) {
+                      <span class="word-chip chip-true">{{ item.word }} <em>{{ item.count }}</em></span>
+                    }
+                  </div>
+                }
+                @case ('common-errors') {
+                  <p class="help-intro">
+                    Le 10 domande con la maggior percentuale di errore. Analizzale per evitare gli sbagli più comuni:
+                  </p>
+                  @for (item of commonErrors; track item.rank) {
+                    <div class="error-question-card">
+                      <div class="eq-meta">
+                        <span class="eq-rank">{{ item.rank }}°</span>
+                        <span class="eq-answer" [class.is-true]="item.correctAnswer" [class.is-false]="!item.correctAnswer">
+                          {{ item.correctAnswer ? 'V' : 'F' }}
+                        </span>
+                        <span class="eq-rate">{{ item.errorRate }}% di errori</span>
+                      </div>
+                      <p class="eq-text">{{ item.text }}</p>
+                    </div>
+                  }
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (showLogoutModal()) {
+        <div class="modal-overlay" (click)="closeLogoutModal()">
+          <div class="modal-card fade-in" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+            <div class="modal-icon" aria-hidden="true">⎋</div>
+            <h3 id="logout-title">Vuoi uscire dal quiz?</h3>
+            <p>Se esci adesso, i progressi correnti non verranno salvati.</p>
+            
+            <div class="modal-buttons">
+              <button class="btn-modal-cancel" (click)="closeLogoutModal()" type="button">Annulla</button>
+              <button class="btn-modal-confirm" (click)="confirmLogout()" type="button">Esci</button>
+            </div>
+          </div>
+        </div>
+      }
     </header>
 
     <main class="quiz-body">
       @if (currentQuestion(); as q) {
-        <div class="question-card fade-in">
+        <div class="question-card fade-in" aria-live="polite">
           @if (q.imageUrl) {
             <div class="image-container">
-              <img [src]="'/assets' + q.imageUrl" alt="Segnale Stradale" class="signal-image" />
+              <img [src]="'/assets' + q.imageUrl" alt="Segnale stradale della domanda corrente" class="signal-image" />
             </div>
           }
-          <h2 class="question-text">{{ q.text }}</h2>
+          <p class="question-kicker">Rispondi vero o falso</p>
+          <h1 class="question-text">{{ q.text }}</h1>
           <span class="category-badge">{{ q.category }}</span>
         </div>
 
         <div class="controls">
-          <button class="btn-answer btn-vero" [class.selected-vero]="currentAnswer() === true" (click)="selectAnswer(true)">VERO (V)</button>
-          <button class="btn-answer btn-falso" [class.selected-falso]="currentAnswer() === false" (click)="selectAnswer(false)">FALSO (F)</button>
+          <button
+            class="btn-answer btn-vero"
+            [class.is-selected]="currentAnswer() === true"
+            [attr.aria-pressed]="currentAnswer() === true"
+            (click)="selectAnswer(true)">
+            Vero
+          </button>
+          <button
+            class="btn-answer btn-falso"
+            [class.is-selected]="currentAnswer() === false"
+            [attr.aria-pressed]="currentAnswer() === false"
+            (click)="selectAnswer(false)">
+            Falso
+          </button>
         </div>
       } @else {
-        <div class="loading-state"><p>Caricamento scheda d'esame...</p></div>
+        <div class="loading-state" role="status" aria-live="polite"><p>Caricamento scheda d'esame...</p></div>
       }
     </main>
 
     <footer class="quiz-footer">
       <div class="pagination-grid">
         @for (q of questions(); track q.id; let i = $index) {
-          <button class="page-dot" [class.active]="i === currentIndex()" [class.answered]="hasAnswered(q.id)" (click)="goToQuestion(i)">{{ i + 1 }}</button>
+          <button
+            class="page-dot"
+            [class.active]="i === currentIndex()"
+            [class.answered]="hasAnswered(q.id)"
+            [attr.aria-current]="i === currentIndex() ? 'step' : null"
+            [attr.aria-label]="'Vai alla domanda ' + (i + 1) + (hasAnswered(q.id) ? ', risposta salvata' : ', non ancora risposta')"
+            (click)="goToQuestion(i)">
+            {{ i + 1 }}
+          </button>
         }
       </div>
     </footer>
 
   } @else {
-    <div class="results-view fade-in">
+    <main class="results-scroll">
+    <div class="results-view fade-in" aria-live="polite">
       
       <div class="result-badge" [class.success]="examResult()!.passed" [class.error]="!examResult()!.passed">
         @if (examResult()!.passed) {
@@ -90,14 +217,15 @@
 
       <div class="result-actions">
         <button class="btn-history" (click)="restartQuiz()">
-          🔄 Nuova Simulazione
+          Nuova simulazione
         </button>
 
         <button class="btn-history" (click)="goToHistory()">
-          📊 Vedi Storico Risultati
+          Vedi storico risultati
         </button>
       </div>
     </div>
+    </main>
   }
 </div>
   
