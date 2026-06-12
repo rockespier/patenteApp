@@ -3,6 +3,15 @@ import { CommonModule } from '@angular/common';
 import { ExamService } from '../../../core/services/exam.service';
 import { Question, QuizResult, QuizSubmission, UserAnswer } from '../../../core/models/exam.models';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import {
+  HELP_TIPS,
+  FALSE_ONLY_WORDS,
+  TRUE_ONLY_WORDS,
+  COMMON_ERROR_QUESTIONS
+} from '../../../core/constants/quiz-help.constants';
+
+export type HelpTab = 'tips' | 'false-words' | 'true-words' | 'common-errors';
 
 @Component({
   selector: 'app-quiz',
@@ -16,6 +25,7 @@ export class QuizComponent implements OnInit {
   private readonly examService = inject(ExamService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  public readonly authService = inject(AuthService);
 
   // --- SIGNALS (Estado de la aplicación) ---
   questions = signal<Question[]>([]);
@@ -108,24 +118,73 @@ examResult = signal<QuizResult | null>(null);
     return this.answers().has(questionId);
   }
 
-goToHistory(): void {
-  this.router.navigate(['/history']);
+  goToHistory(): void {
+    this.router.navigate(['/history']);
+  }
+
+  /**
+   * Cierra la sesión de Firebase y redirige automáticamente al login
+   */
+  async logout(): Promise<void> {
+    if (confirm('Sei sicuro di voler uscire? Il progresso corrente andrà perduto.')) {
+      await this.authService.logout();
+    }
+  }
+
+  // --- POPUP DE AYUDA (indizi linguistici + errori comuni) ---
+  showHelpModal = signal<boolean>(false);
+  helpTab = signal<HelpTab>('tips');
+
+  // Datos estáticos expuestos al template
+  readonly helpTips = HELP_TIPS;
+  readonly falseWords = FALSE_ONLY_WORDS;
+  readonly trueWords = TRUE_ONLY_WORDS;
+  readonly commonErrors = COMMON_ERROR_QUESTIONS;
+
+  openHelpModal(): void {
+    this.helpTab.set('tips');
+    this.showHelpModal.set(true);
+  }
+
+  closeHelpModal(): void {
+    this.showHelpModal.set(false);
+  }
+
+  setHelpTab(tab: HelpTab): void {
+    this.helpTab.set(tab);
+  }
+
+  // 1. Agrega este Signal en tu clase junto a los demás:
+showLogoutModal = signal<boolean>(false);
+
+// 2. Modifica el método logout para que ya NO use el confirm nativo:
+openLogoutModal(): void {
+  this.showLogoutModal.set(true);
 }
 
-// Reemplaza el método submitExam con este:
-submitExam(): void {
-  if (this.isSubmitting()) return;
-  this.isSubmitting.set(true);
+closeLogoutModal(): void {
+  this.showLogoutModal.set(false);
+}
 
-  const submissionAnswers: UserAnswer[] = [];
-  this.answers().forEach((answer, questionId) => {
-    submissionAnswers.push({ questionId, answer });
-  });
+async confirmLogout(): Promise<void> {
+  this.closeLogoutModal();
+  await this.authService.logout();
+}
 
-  const submission: QuizSubmission = {
-    sessionId: this.sessionId(),
-    answers: submissionAnswers
-  };
+  // Reemplaza el método submitExam con este:
+  submitExam(): void {
+    if (this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+
+    const submissionAnswers: UserAnswer[] = [];
+    this.answers().forEach((answer, questionId) => {
+      submissionAnswers.push({ questionId, answer });
+    });
+
+    const submission: QuizSubmission = {
+      sessionId: this.sessionId(),
+      answers: submissionAnswers
+    };                                  
 
   this.examService.submitExam(submission).subscribe({
     next: (result) => {
